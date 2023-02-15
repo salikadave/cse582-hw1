@@ -360,38 +360,6 @@ void InitNet() {
 }
 
 void *TrainModelThread(void *id) {
-  /* 
-  -------------------------------------------
-  CSE582: HW1 Submission: Code Comments:
-  Author: Salika Dave
-  -------------------------------------------
-
-  ==> Args: (pointer) id: thread identifier
-  About the neural network:
-  ==> This function runs a loop over the training set based on the number of training epochs iter = 5 >> (see training details)
-  ==> Every thread performs training on the neural network in a batch of 10000 words at a time (while-loop)
-  ==> This function implements negative sampling based on the unigram distribution of words. For this reason it makes use of a Unigram Table (initialized in InitUnigramTable()) that builds a hash table for the frequency of occurrence of every word in the corpus. Negative sampling is performed to reduce the number of weights that are updated in the backpropagation pass of the hidden layer of the neural network. 
-
-  CBOW Architecture:
-  - It predicts the target word based on the context. It takes in a certain number of words before the target word and the same number after and calculate the probability of the target word .
-
-  Some important variables used in CBOW:
-  - neu1: (vector) >> used in the CBOW architecture; output of the hidden layer 1; declared with a layer_size = 100 which means that layer 1 has only 100 feature vectors, ie. it will have 100 neurons in this hidden layer
-
-  - alpha: this is the learning rate parameter; for CBOW it is set to the default value of 0.05; this decreases as this function iterates over the entire training set
-
-  - word_count: # of words that have already been processed by this thread
-
-  >> Training details for this assignment:
-    - Uses Continuous Bag of Words (CBOW) to generate word embeddings
-    - Size of word vectors: 300
-    - Window Size: 10
-    - \# Negative Samples: 10
-    - Down Sampling Range: 1e-5
-    - \# Threads for training: 300
-    - \# Training iterations: 3
-    - \# Discard words that occur less than (min-count): 10 times
-  */
   long long a, b, d, cw, word, last_word, sentence_length = 0, sentence_position = 0;
   long long word_count = 0, last_word_count = 0, sen[MAX_SENTENCE_LENGTH + 1];
   long long l1, l2, c, target, label, local_iter = iter;
@@ -400,13 +368,24 @@ void *TrainModelThread(void *id) {
   clock_t now;
   real *neu1 = (real *)calloc(layer1_size, sizeof(real));
   real *neu1e = (real *)calloc(layer1_size, sizeof(real));
+  
+  // Read the training file 
   FILE *fi = fopen(train_file, "rb");
   fseek(fi, file_size / (long long)num_threads * (long long)id, SEEK_SET);
   while (1) {
-    // INFO: iterate over chunks for 10000
+    // Start the training process
+
+
+    // Word count and last word count starts off with zero
     if (word_count - last_word_count > 10000) {
+      // If I've counted more than 10K words after the last update, 
+      // increase the actual count by the difference 
       word_count_actual += word_count - last_word_count;
+      
+      //Update the last count
       last_word_count = word_count;
+      
+      // Print intermediate results for debug mode
       if ((debug_mode > 1)) {
         now=clock();
         printf("%cAlpha: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  ", 13, alpha,
@@ -414,70 +393,108 @@ void *TrainModelThread(void *id) {
          word_count_actual / ((real)(now - start + 1) / (real)CLOCKS_PER_SEC * 1000));
         fflush(stdout);
       }
-      // INFO: Adjusting the learning rate
       alpha = starting_alpha * (1 - word_count_actual / (real)(iter * train_words + 1));
+      
+      // Adaptive decrement of learning rate to improve descent
       if (alpha < starting_alpha * 0.0001) alpha = starting_alpha * 0.0001;
     }
+
+    //Start off with a sentence length of 0
     if (sentence_length == 0) {
       while (1) {
-        // INFO: The program initializes a hash table that matches words and its frequency of occurrence in the dataset 
         word = ReadWordIndex(fi);
         if (feof(fi)) break;
         if (word == -1) continue;
         word_count++;
         if (word == 0) break;
-        // INFO: We perform subsampling as certain words that occur frequently do not provide much information regarding context hence we need not update the weights for these words during training. 
         // The subsampling randomly discards frequent words while keeping the ranking same
         if (sample > 0) {
-          // INFO: This is the process of subsampling that calculates the probability of whether a word is to be included in the dataset or not. Since the parameter for negative sampling is 10; words with frequency of greater than 10 are not included in the training set .
-          // INFO: This is a part of how CBOW computes the probability of every word given context.
           real ran = (sqrt(vocab[word].cn / (sample * train_words)) + 1) * (sample * train_words) / vocab[word].cn;
           next_random = next_random * (unsigned long long)25214903917 + 11;
           if (ran < (next_random & 0xFFFF) / (real)65536) continue;
         }
-        // INFO: Keep the word in the sentence 
+        //Capture index of less fequent words into Sen[.] array
         sen[sentence_length] = word;
         sentence_length++;
-        // INFO: check if CBOW does not exceed the allowed maximum length of every sentence after the process of sub sampling
         if (sentence_length >= MAX_SENTENCE_LENGTH) break;
       }
       sentence_position = 0;
     }
+
+    // If end of file is reached or if word count is more than that can be handled per thread, 
+    // decrease iteration and reset counts and lengths
     if (feof(fi) || (word_count > train_words / num_threads)) {
+      // Update the actual count since the last update
       word_count_actual += word_count - last_word_count;
+      // Decrease iteration (There is no anyother reference to local_iteration)
+      // Thus this breaks the main while loop when it reaches 0
       local_iter--;
       if (local_iter == 0) break;
+
+      // If loop continues, reset counts because we have max-ed out or reached EoF
       word_count = 0;
       last_word_count = 0;
       sentence_length = 0;
       fseek(fi, file_size / (long long)num_threads * (long long)id, SEEK_SET);
       continue;
     }
+
+    // Sentence_position variable update happens at the end of while loop 
+    // and thus picks up word indexes from sen[] array sequentially 
     word = sen[sentence_position];
     if (word == -1) continue;
-    // INFO: Initialize all the weights as 0 for both of the hidden layers
+
+    // layer1_size is initialized to 100 and thus neu1 and neu1e are
+    // initialized to zero vectors for length 100
     for (c = 0; c < layer1_size; c++) neu1[c] = 0;
     for (c = 0; c < layer1_size; c++) neu1e[c] = 0;
-    // Generate a random number
+
+    // Select a pseudo-random number
     next_random = next_random * (unsigned long long)25214903917 + 11;
+    
+    // window is a global variable of length 5
+    // Given a random number b finds the start of the window,
+   
     b = next_random % window;
     if (cbow) {  //train the cbow architecture
       // in -> hidden
       cw = 0;
-      // INFO: This is the core code for how CBOW composes the context embeddings 
-      // INFO: the following code is basically looping over the current context to extract all the context words  
+       // eg.: nRand = 8 => b=8%5=3
+       // a iterates from 3 to (5*2+1-3=8)
+       //  ----------------------------
+       //  | b | b+1 | b+2 | b+3 | b+4|
+       //  ----------------------------
+       //  <----------window--------->
+       //
       for (a = b; a < window * 2 + 1 - b; a++) if (a != window) {
+        
+        // c gives the true position "window neighbour" for the actual 
+        // position of the element under consideration (i.e.: sen[sentence_position])
+        // So in the above example, sentence_position - 5 + (a=2) gives
+        // the true position of b+1 with respect to sen[sentence_position]
         c = sentence_position - window + a;
+
+        //Proceed iff c is within the range of sentence length
         if (c < 0) continue;
         if (c >= sentence_length) continue;
         last_word = sen[c];
         if (last_word == -1) continue;
+        // We now capture 100 words starting from last_word*layer1_size till c + (last_word * layer1_size) 
+        // For instance, say last_word = 50. hidden layer size is 100
+        // So we take (0+50*100=500) to (99+50*100)=599
+        // This is nothing but composing the context
         for (c = 0; c < layer1_size; c++) neu1[c] += syn0[c + last_word * layer1_size];
         cw++;
       }
       if (cw) {
+        // Because the composing is happening 5 times (size of the window), we
+        // normalize the values in neu1 by dividing it by cw (a counter to make)
+        // The reason it is not simply 5 is because, not all the character in 
+        // window produce valid c value. So we maintain a cw counter to consdier 
+        // only those that are valid. 
         for (c = 0; c < layer1_size; c++) neu1[c] /= cw;
-        // INFO: The current set of input training parameters does not use hieirarchical softmax but negative sampling
+
+        // From here we propogate through the neural net
         if (hs) for (d = 0; d < vocab[word].codelen; d++) {
           f = 0;
           l2 = vocab[word].point[d] * layer1_size;
@@ -494,40 +511,51 @@ void *TrainModelThread(void *id) {
           for (c = 0; c < layer1_size; c++) syn1[c + l2] += g * neu1[c];
         }
         // NEGATIVE SAMPLING
-        // INFO: Perform negative sampling to reduce the number of weights that are updated during the backpropagation pass
+        // In the FOR loop, we are bascially looking at the context of a given word
+        // and creating target for the word. If the word is in the neighbouring context
+        // then it gets the label 1. For a negative sample, we pick a word at random 
+        // from the entire dictionary and then assign it with label 0.
         if (negative > 0) for (d = 0; d < negative + 1; d++) {
           if (d == 0) {
-            // INFO: This is the first iteration and so this is the first sample that is picked for training
             target = word;
             label = 1;
           } else {
-            // Generate a random number
             next_random = next_random * (unsigned long long)25214903917 + 11;
-            // INFO: Using the unigram table pick a random word that becomes the new target
             target = table[(next_random >> 16) % table_size];
             if (target == 0) target = next_random % (vocab_size - 1) + 1;
-            // INFO: If we pick the target word don't remove this from the training set
             if (target == word) continue;
             label = 0;
           }
-          // INFO: fetching the index of the target word in the output hidden layer in the neural network
+          // Now, syn1neg represents synapses or weights for the negative sampling. 
           l2 = target * layer1_size;
           f = 0;
-          // INFO: For this neural network we need to calculate the dot product between the average of all the word vectors
+
+          // Perform a forward pass and calculate the output 'f'
           for (c = 0; c < layer1_size; c++) f += neu1[c] * syn1neg[c + l2];
+
+          // check for range and calculate the gradient 'g'
           if (f > MAX_EXP) g = (label - 1) * alpha;
           else if (f < -MAX_EXP) g = (label - 0) * alpha;
           else g = (label - expTable[(int)((f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2))]) * alpha;
+          
+          // Propagate 'g' from output to hidden layer through negative sampling weights
           for (c = 0; c < layer1_size; c++) neu1e[c] += g * syn1neg[c + l2];
+
+          // Update the weights based on the positive samples (neu1) and caculated gradient 'g'
           for (c = 0; c < layer1_size; c++) syn1neg[c + l2] += g * neu1[c];
         }
-        // hidden -> in
+
+        // Similarly, propogate the values from hidden layer to input layer 
         for (a = b; a < window * 2 + 1 - b; a++) if (a != window) {
+          // Capture the true position of words within the window
           c = sentence_position - window + a;
           if (c < 0) continue;
           if (c >= sentence_length) continue;
           last_word = sen[c];
           if (last_word == -1) continue;
+
+          // update syn0 (weights connecting input and hidden layer) based on the
+          //  negative sample output (neu1e)
           for (c = 0; c < layer1_size; c++) syn0[c + last_word * layer1_size] += neu1e[c];
         }
       }
@@ -581,6 +609,8 @@ void *TrainModelThread(void *id) {
         for (c = 0; c < layer1_size; c++) syn0[c + l1] += neu1e[c];
       }
     }
+
+    // Increment sentence position
     sentence_position++;
     if (sentence_position >= sentence_length) {
       sentence_length = 0;
@@ -594,17 +624,6 @@ void *TrainModelThread(void *id) {
 }
 
 void TrainModel() {
-  /* 
-  -------------------------------------------
-  CSE582: HW1 Submission: Code Comments:
-  Author: Salika Dave
-  -------------------------------------------
-
-  ===> This function is the driver code for training the word2vec model.
-  ===> It reads the vocabulary (i.e. all the text files in the training folder for the given dataset of 1-billion... )
-  ===> Initialized a Unigram table that is used later for negative sampling
-  ===> Initialize threads for training
-  */
   long a, b, c, d;
   FILE *fo;
   pthread_t *pt = (pthread_t *)malloc(num_threads * sizeof(pthread_t));
