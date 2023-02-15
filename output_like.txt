@@ -1,0 +1,46 @@
+Enter word or sentence (EXIT to break): like
+
+Word: like  Position in vocabulary: 96
+
+                                              Word       Cosine distance
+------------------------------------------------------------------------
+                                             weird		0.627395
+                                             maybe		0.623063
+                                            really		0.621615
+                                              kind		0.614356
+                                              sort		0.604479
+                                             crazy		0.597076
+                                             stuff		0.589220
+                                            pretty		0.588473
+                                        everywhere		0.583176
+                                          nowadays		0.582145
+                                              nice		0.580873
+                                           imagine		0.577715
+                                             scary		0.566790
+                                            always		0.566657
+                                             silly		0.561782
+                                           anymore		0.561709
+                                             likes		0.559619
+                                           suppose		0.556418
+                                         basically		0.554779
+                                             nicer		0.554711
+                                               you		0.551190
+                                               bit		0.550790
+                                           pretend		0.549722
+                                           strange		0.544718
+                                         something		0.544623
+                                        yesteryear		0.544429
+                                               odd		0.544084
+                                             guess		0.543527
+                                              cute		0.541869
+                                            boring		0.540752
+                                                so		0.539809
+                                          actually		0.539728
+                                             sorts		0.538552
+                                            groovy		0.538363
+                                             fancy		0.537986
+                                               lot		0.535047
+                                              seem		0.531923
+                                            uncool		0.528465
+                                              icky		0.528031
+                                              hmmm		0.526070

@@ -1,0 +1,46 @@
+Enter word or sentence (EXIT to break): she
+
+Word: she  Position in vocabulary: 66
+
+                                              Word       Cosine distance
+------------------------------------------------------------------------
+                                               her		0.825979
+                                           herself		0.752478
+                                              hers		0.678392
+                                            mother		0.669555
+                                             woman		0.653317
+                                           husband		0.629520
+                                                he		0.627774
+                                          daughter		0.618053
+                                              girl		0.604381
+                                                me		0.581234
+                                       grandmother		0.575840
+                                               mum		0.566091
+                                           someone		0.549502
+                                             never		0.548359
+                                               him		0.539126
+                                                my		0.535195
+                                               mom		0.532670
+                                               mrs		0.527835
+                                         boyfriend		0.518102
+                                                 i		0.508317
+                                            friend		0.502561
+                                              aunt		0.500764
+                                            sister		0.500722
+                                        babysitter		0.495322
+                                              wife		0.493528
+                                            wolfie		0.490907
+                                                ms		0.489499
+                                          teenager		0.489375
+                                          mentwabe		0.487205
+                                          killiner		0.484279
+                                             aunty		0.474780
+                                           daugher		0.472927
+                                         tearfully		0.472303
+                                        beautician		0.471973
+                                               dad		0.470357
+                                            myself		0.469565
+                                        schoolgirl		0.463910
+                                            couple		0.463702
+                                       hairdresser		0.462519
+                                          somebody		0.459866

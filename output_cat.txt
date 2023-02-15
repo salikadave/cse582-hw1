@@ -1,0 +1,46 @@
+Enter word or sentence (EXIT to break): cat
+
+Word: cat  Position in vocabulary: 4488
+
+                                              Word       Cosine distance
+------------------------------------------------------------------------
+                                              cats		0.715931
+                                            feline		0.680276
+                                               dog		0.680233
+                                             tabby		0.674194
+                                           kittens		0.644552
+                                         dachshund		0.632711
+                                          doberman		0.625735
+                                             moggy		0.624264
+                                               pet		0.619814
+                                             puppy		0.618805
+                                           raccoon		0.616119
+                                           scaredy		0.606076
+                                          pinscher		0.606018
+                                           hamster		0.603930
+                                           poodles		0.601297
+                                            poodle		0.593703
+                                           felines		0.591605
+                                            kitten		0.590595
+                                            piglet		0.584925
+                                             pooch		0.579018
+                                               pug		0.574924
+                                             doggy		0.572078
+                                              paws		0.571167
+                                        pomeranian		0.568093
+                                            racoon		0.556567
+                                           critter		0.555914
+                                          labrador		0.555633
+                                           meowing		0.552684
+                                         tarantula		0.550091
+                                             furry		0.550037
+                                              mutt		0.549696
+                                            doggie		0.546447
+                                            rodent		0.545932
+                                              dogs		0.545932
+                                               pup		0.544149
+                                            rabbit		0.543325
+                                         cockatiel		0.541847
+                                        chihuahuas		0.536081
+                                         shorthair		0.535327
+                                           puppies		0.534370
