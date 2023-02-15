@@ -1,3 +1,8 @@
+# ================================================================================
+# This file has been adapted from the original source code for Word2Vec presented by Mikolov et. al available at https://code.google.com/archive/p/word2vec/
+# ================================================================================
+
+# Function Normalization
 # This function will convert text to lowercase and remove special characters
 normalize_text() {
   awk '{print tolower($0);}' | sed -e "s/’/'/g" -e "s/′/'/g" -e "s/''/ /g" -e "s/'/ ' /g" -e "s/“/\"/g" -e "s/”/\"/g" \
@@ -6,12 +11,14 @@ normalize_text() {
   -e 's/«/ /g' | tr 0-9 " "
 }
 
-# check dataset path
+# Dataset for this assignment is the 1 billion word language modeling benchmark
 
 echo "Fetching dataset"
 wget http://www.statmt.org/lm-benchmark/1-billion-word-language-modeling-benchmark-r13output.tar.gz
 echo "Unzipping dataset"
 tar -xvf 1-billion-word-language-modeling-benchmark-r13output.tar.gz
+
+# The dataset contains data for training as well validation; for this assignment made use of the training dataset
 
 for i in `ls 1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled`; do
   normalize_text < 1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/$i >> data.txt
@@ -54,11 +61,12 @@ while (<>) {
 }
 ' | normalize_text | awk '{if (NF>1) print;}' >> data.txt
 
-# time ./word2vec -train data.txt -output vectors.bin -cbow 1 -size 200 -window 8 -negative 25 -hs 0 -sample 1e-4 -threads 20 -binary 1 -iter 15
-# ./distance vectors.bin
-
+# Compile word2vec
 make
 
 echo "Initializing training"
 
 time ./word2vec -train data.txt -output vectors.bin -cbow 1 -size 300 -window 10 -negative 10 -hs 0 -sample 1e-5 -threads 200 -binary 1 -iter 3 -min-count 10
+
+# Execute this command after training completion
+# ./distance vectors.bin
