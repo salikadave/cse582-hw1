@@ -476,13 +476,15 @@ void *TrainModelThread(void *id) {
         cw++;
       }
       if (cw) {
+        // INFO: If we have atleast one context word, average out the running sum of the context vectors by the number of context words
         for (c = 0; c < layer1_size; c++) neu1[c] /= cw;
-        // INFO: The current set of input training parameters does not use hieirarchical softmax but negative sampling
+        // INFO: The current set of input training parameters does not use hieirarchical softmax but only negative sampling (have set hs = 0)
         if (hs) for (d = 0; d < vocab[word].codelen; d++) {
           f = 0;
           l2 = vocab[word].point[d] * layer1_size;
           // Propagate hidden -> output
           for (c = 0; c < layer1_size; c++) f += neu1[c] * syn1[c + l2];
+          // INFO: Applying the Sigmoid activation function 
           if (f <= -MAX_EXP) continue;
           else if (f >= MAX_EXP) continue;
           else f = expTable[(int)((f + MAX_EXP) * (EXP_TABLE_SIZE / MAX_EXP / 2))];
@@ -522,11 +524,14 @@ void *TrainModelThread(void *id) {
           for (c = 0; c < layer1_size; c++) syn1neg[c + l2] += g * neu1[c];
         }
         // hidden -> in
+        // INFO: Iterate over the current context of words 
         for (a = b; a < window * 2 + 1 - b; a++) if (a != window) {
           c = sentence_position - window + a;
           if (c < 0) continue;
           if (c >= sentence_length) continue;
+          // INFO: Getting the id of the context word  
           last_word = sen[c];
+          // INFO: verify that the word exists in the vocab
           if (last_word == -1) continue;
           for (c = 0; c < layer1_size; c++) syn0[c + last_word * layer1_size] += neu1e[c];
         }
