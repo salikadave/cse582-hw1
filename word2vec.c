@@ -360,6 +360,39 @@ void InitNet() {
 }
 
 void *TrainModelThread(void *id) {
+  /* 
+  -------------------------------------------
+  CSE582: HW1 Submission: Code Comments:
+  Author: Salika Dave
+  -------------------------------------------
+
+  ==> Args: (pointer) id: thread identifier
+  About the neural network:
+  ==> This function runs a loop over the training set based on the number of training epochs iter = 5 >> (see training details)
+  ==> Every thread performs training on the neural network in a batch of 10000 words at a time (while-loop)
+  ==> This function implements negative sampling based on the unigram distribution of words. For this reason it makes use of a Unigram Table InitUnigramTable() that builds a hash table for the frequency of occurrence of every word in the corpus. 
+  ==> 
+
+  CBOW Architecture:
+  - It predicts the target word based on the context. It takes in a certain number of words before the target word and the same number after and calculate the probability of the target word .
+
+  Some important variables used in CBOW:
+  - neu1: (vector) >> used in the CBOW architecture; output of the hidden layer 1; declared with a layer_size = 100 which means that layer 1 has only 100 feature vectors, ie. it will have 100 neurons in this hidden layer
+
+  - alpha: this is the learning rate parameter; for CBOW it is set to the default value of 0.05; this decreases as this function iterates over the entire training set
+
+  - word_count: # of words that have already been processed by this thread
+
+  >> Training details for this assignment:
+    - Uses Continuous Bag of Words (CBOW) to generate word embeddings
+    - Size of word vectors: 300
+    - Window Size: 10
+    - \# Negative Samples: 10
+    - Down Sampling Range: 1e-5
+    - \# Threads for training: 300
+    - \# Training iterations: 3
+    - \# Discard words that occur less than (min-count): 10 times
+  */
   long long a, b, d, cw, word, last_word, sentence_length = 0, sentence_position = 0;
   long long word_count = 0, last_word_count = 0, sen[MAX_SENTENCE_LENGTH + 1];
   long long l1, l2, c, target, label, local_iter = iter;
@@ -542,6 +575,17 @@ void *TrainModelThread(void *id) {
 }
 
 void TrainModel() {
+  /* 
+  -------------------------------------------
+  CSE582: HW1 Submission: Code Comments:
+  Author: Salika Dave
+  -------------------------------------------
+
+  ===> This function is the driver code for training the word2vec model.
+  ===> It reads the vocabulary (i.e. all the text files in the training folder for the given dataset of 1-billion... )
+  ===> Initialized a Unigram table that is used later for negative sampling
+  ===> Initialize threads for training
+  */
   long a, b, c, d;
   FILE *fo;
   pthread_t *pt = (pthread_t *)malloc(num_threads * sizeof(pthread_t));
